@@ -1,0 +1,2 @@
+# Controllers directory
+Place controller handler functions here when modularizing business logic from routes.

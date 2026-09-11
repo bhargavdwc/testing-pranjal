@@ -1,0 +1,32 @@
+{
+  "name": "pranjalsarkar-r",
+  "version": "1.0.0",
+  "description": "> Full-stack CRM and marketing website for Pranjal Sarkar's Product Leadership Studio.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepare": "husky"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/digitalwebconnection/pranjalsarkar.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/digitalwebconnection/pranjalsarkar/issues"
+  },
+  "homepage": "https://github.com/digitalwebconnection/pranjalsarkar#readme",
+  "devDependencies": {
+    "husky": "^9.1.7"
+  },
+  "dependencies": {
+    "@types/react-google-recaptcha": "^2.1.9",
+    "react-google-recaptcha": "^3.1.0"
+  }
+}

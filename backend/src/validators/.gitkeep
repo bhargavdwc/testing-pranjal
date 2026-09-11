@@ -1,0 +1,2 @@
+# Validators directory
+Place Zod / validation schemas here when modularizing request validation from routes.

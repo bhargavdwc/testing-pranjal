@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+   <!-- Main Website -->
+    <url>
+        <loc>https://pranjalsarkar.com/</loc>
+        <changefreq>weekly</changefreq>
+        <priority>1.0</priority>
+    </url>
+
+    <!-- About / Decision Audit -->
+    <url>
+        <loc>https://pranjalsarkar.com/about/</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.9</priority>
+    </url>
+
+    <!-- Framework -->
+    <url>
+        <loc>https://pranjalsarkar.com/decision-audit-gap/</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.9</priority>
+    </url>
+
+    <!-- Workshops -->
+    <url>
+        <loc>https://pranjalsarkar.com/workshops/</loc>
+        <changefreq>weekly</changefreq>
+        <priority>0.9</priority>
+    </url>
+
+    <!-- Lectures / Speaking -->
+    <url>
+        <loc>https://pranjalsarkar.com/lectures-talks/</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+
+    <!-- Book -->
+    <url>
+        <loc>https://pranjalsarkar.com/book/</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+
+    <!-- Free Tools -->
+    <url>
+        <loc>https://pranjalsarkar.com/tools/</loc>
+        <changefreq>weekly</changefreq>
+        <priority>0.9</priority>
+    </url>
+
+    <!-- Individual Decision Audit Tools -->
+    <url>
+        <loc>https://pranjalsarkar.com/tools/a1/ps-role-safety.html</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+
+    <!-- Masterclass -->
+    <url>
+        <loc>https://pranjalsarkar.com/masterclass/</loc>
+        <changefreq>weekly</changefreq>
+        <priority>0.8</priority>
+    </url>
+
+    <!-- Contact -->
+    <url>
+        <loc>https://pranjalsarkar.com/contact/</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+
+    <!-- Blog -->
+    <url>
+        <loc>https://pranjalsarkar.com/blog</loc>
+        <changefreq>weekly</changefreq>
+        <priority>0.8</priority>
+    </url>
+
+    <!-- Privacy -->
+    <url>
+        <loc>https://pranjalsarkar.com/privacy-policy-2/</loc>
+        <changefreq>yearly</changefreq>
+        <priority>0.3</priority>
+    </url>
+
+    <!-- Terms -->
+    <url>
+        <loc>https://pranjalsarkar.com/terms/</loc>
+        <changefreq>yearly</changefreq>
+        <priority>0.3</priority>
+    </url>
+
+</urlset>
