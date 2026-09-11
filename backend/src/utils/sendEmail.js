@@ -19,9 +19,9 @@ export const sendNewLeadNotification = async (lead) => {
     sendSmtpEmail.subject = `🔔 New Lead: ${lead.name}`;
     sendSmtpEmail.sender = {
       name: "CRM System",
-      email: "bhargav.digitalwebconnection@gmail.com",
+      email: "office@pranjalsarkar.com",
     };
-    sendSmtpEmail.to = [{ email: "bhargav.digitalwebconnection@gmail.com", name: "Support" }];
+    sendSmtpEmail.to = [{ email: "office@pranjalsarkar.com", name: "Support" }];
     sendSmtpEmail.htmlContent = `
         <h2>New Lead Application</h2>
         <p><strong>Name:</strong> ${escapeHtml(lead.name)}</p>
@@ -55,7 +55,7 @@ export const sendMenteeConfirmation = async (lead) => {
     sendSmtpEmail.subject = "🎊 Welcome Aboard! AI Product Leadership Studio";
     sendSmtpEmail.sender = {
       name: "Team Pranjal Sarkar",
-      email: "bhargav.digitalwebconnection@gmail.com",
+      email: "office@pranjalsarkar.com",
     };
     sendSmtpEmail.to = [{ email: lead.email, name: lead.name }];
     sendSmtpEmail.htmlContent = `

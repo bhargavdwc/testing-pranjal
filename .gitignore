@@ -59,3 +59,6 @@ ai_int/
 docs/
 files (8)/
 AI_INSTRUCTION/
+
+# Backend maintenance and utility scripts
+backend/scripts/
