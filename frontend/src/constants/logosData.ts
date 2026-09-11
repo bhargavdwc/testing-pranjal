@@ -1,18 +1,18 @@
-import logoAmazon from '../assets/logos/BL-AMAZON.webp';
+import logoAmazon from '../assets/logos/bl-amazon.webp';
 import logoBoA from '../assets/logos/bank-of-america.webp';
-import logoEpam from '../assets/logos/BL-EPAM.webp';
+import logoEpam from '../assets/logos/bl-epam.webp';
 import logoEricson from '../assets/logos/bl-ericsson.webp';
-import logoFedEx from '../assets/logos/BL-FedEx.webp';
-import logoHcl from '../assets/logos/BL-HCL.webp';
-import logoIbm from '../assets/logos/BL-IBM.webp';
+import logoFedEx from '../assets/logos/bl-fedex.webp';
+import logoHcl from '../assets/logos/bl-hcl.webp';
+import logoIbm from '../assets/logos/bl-ibm.webp';
 import logoJpmorgan from '../assets/logos/bl-jpmorgan-chase.webp';
-import logoNatwest from '../assets/logos/BL-NatWest.webp';
-import logoPwc from '../assets/logos/BL-PWC.webp';
+import logoNatwest from '../assets/logos/bl-natwest.webp';
+import logoPwc from '../assets/logos/bl-pwc.webp';
 import logoPaloalto from '../assets/logos/bl-palo-alto.webp';
-import logoSynchrony from '../assets/logos/BL-Synchrony.webp';
-import logoTcs from '../assets/logos/BL-TCS.webp';
+import logoSynchrony from '../assets/logos/bl-synchrony.webp';
+import logoTcs from '../assets/logos/bl-tcs.webp';
 import logoTdbank from '../assets/logos/bl-td-bank.webp';
-import logoValuelabs from '../assets/logos/ValueLabs.webp';
+import logoValuelabs from '../assets/logos/valuelabs.webp';
 
 export const companies = [
   { name: 'Amazon', logo: logoAmazon },
