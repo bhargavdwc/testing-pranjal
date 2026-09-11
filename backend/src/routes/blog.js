@@ -261,6 +261,81 @@ router.get("/stats", protectBlogAdmin, async (req, res) => {
 });
 
 // ═══════════════════════════════════════════════════════
+// GET  /api/blog/export-csv — export blogs to CSV
+// ═══════════════════════════════════════════════════════
+router.get("/export-csv", protectBlogAdmin, async (req, res) => {
+  try {
+    const { search = "", status = "" } = req.query;
+    const query = {};
+    if (search && search.trim()) {
+      const safeSearch = escapeRegex(search.trim());
+      query.title = { $regex: safeSearch, $options: "i" };
+    }
+    if (status && status !== "All") query.status = status;
+
+    const filename = `blogs_export_${new Date().toISOString().slice(0, 10)}.csv`;
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+
+    const csvEscape = (val) => {
+      if (val === null || val === undefined) return "";
+      let str = String(val);
+      if (/^[=+\-@\t\r]/.test(str)) {
+        str = `'${str}`;
+      }
+      if (str.includes(",") || str.includes('"') || str.includes("\n") || str.includes("\r")) {
+        return `"${str.replace(/"/g, '""')}"`;
+      }
+      return str;
+    };
+
+    const headers = ["Title", "Slug", "Status", "Categories", "Read Time", "Published Date", "Published Time", "Scheduled Date", "Scheduled Time"];
+    // Prepend UTF-8 BOM (\uFEFF) so Excel opens the file cleanly with proper UTF-8 character encoding
+    res.write("\uFEFF" + headers.join(",") + "\r\n");
+
+    const cursor = Blog.find(query).sort({ date: -1, createdAt: -1 }).lean().cursor();
+
+    for await (const blog of cursor) {
+      let dateStr = "";
+      let timeStr = "";
+      const d = blog.date ? new Date(blog.date) : (blog.createdAt ? new Date(blog.createdAt) : null);
+      if (d && !isNaN(d.getTime())) {
+        dateStr = d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric", timeZone: "Asia/Kolkata" });
+        timeStr = d.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true, timeZone: "Asia/Kolkata" });
+      }
+
+      let schedDate = "";
+      let schedTime = "";
+      if (blog.scheduledAt) {
+        const sd = new Date(blog.scheduledAt);
+        if (!isNaN(sd.getTime())) {
+          schedDate = sd.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric", timeZone: "Asia/Kolkata" });
+          schedTime = sd.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true, timeZone: "Asia/Kolkata" });
+        }
+      }
+
+      const row = [
+        csvEscape(blog.title),
+        csvEscape(blog.slug),
+        csvEscape((blog.status || "draft").toUpperCase()),
+        csvEscape(Array.isArray(blog.category) ? blog.category.join(", ") : (blog.category || "")),
+        csvEscape(blog.readTime || ""),
+        csvEscape(dateStr),
+        csvEscape(timeStr),
+        csvEscape(schedDate),
+        csvEscape(schedTime),
+      ];
+      res.write(row.join(",") + "\r\n");
+    }
+
+    res.end();  
+  } catch (err) {
+    logger.error("Blog CSV export error:", err.message);
+    return res.status(500).json({ success: false, message: "Export failed." });
+  }
+});
+
+// ═══════════════════════════════════════════════════════
 // GET  /api/blog/:id      — single blog (full)
 // ═══════════════════════════════════════════════════════
 router.get("/:id", protectBlogAdmin, async (req, res) => {

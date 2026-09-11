@@ -21,6 +21,24 @@ const connectDB = async (retries = 5, delay = 3000) => {
         dbName: process.env.DB_NAME || 'test',
       });
       logger.info(`MongoDB Connected: ${conn.connection.host}, database: ${conn.connection.db.databaseName}`);
+
+      // Ensure all blog documents in the database table have a persisted 'status' field
+      try {
+        const Blog = (await import('../models/Blog.js')).default;
+        const missingStatusCount = await Blog.countDocuments({
+          $or: [{ status: { $exists: false } }, { status: null }, { status: '' }],
+        });
+        if (missingStatusCount > 0) {
+          const updateResult = await Blog.updateMany(
+            { $or: [{ status: { $exists: false } }, { status: null }, { status: '' }] },
+            { $set: { status: 'published' } }
+          );
+          logger.info(`DB Migration: Populated status='published' on ${updateResult.modifiedCount} blog document(s) in MongoDB.`);
+        }
+      } catch (migErr) {
+        logger.warn('DB blog status migration warning:', migErr.message);
+      }
+
       return conn;
     } catch (error) {
       logger.error(`MongoDB Connection Error (Attempt ${attempt}/${retries}): ${error.message}`);

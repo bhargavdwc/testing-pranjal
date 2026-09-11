@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import {
   Plus, Search, Trash2, Pencil, Globe, FileText, ChevronDown, ChevronUp, Check,
-  ChevronLeft, ChevronRight, CalendarDays, Clock, X,
+  ChevronLeft, ChevronRight, CalendarDays, Clock, X, Download, Loader2,
 } from "lucide-react";
 import type { Blog } from "../types";
+import { blogFetch } from "../blogApiClient";
 
 interface BlogsTabProps {
   blogs: Blog[];
@@ -32,6 +33,34 @@ export const BlogsTab: React.FC<BlogsTabProps> = ({
   onNew, onEdit, onDelete, onStatusChange, onAdjustSchedule,
   dateSort, onToggleDateSort,
 }) => {
+  const [isDownloadingCSV, setIsDownloadingCSV] = useState(false);
+
+  const handleDownloadCSV = async () => {
+    setIsDownloadingCSV(true);
+    try {
+      const params = new URLSearchParams();
+      if (searchQuery) params.append("search", searchQuery);
+      if (statusFilter && statusFilter !== "All") params.append("status", statusFilter);
+
+      const response = await blogFetch(`/api/blog/export-csv?${params.toString()}`);
+      if (!response.ok) throw new Error("Blog export failed");
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `blogs_export_${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("CSV download failed:", err);
+    } finally {
+      setIsDownloadingCSV(false);
+    }
+  };
+
   // Client-side sort for immediate responsiveness
   const sortedBlogs = React.useMemo(() => {
     if (!blogs || blogs.length === 0) return [];
@@ -94,13 +123,24 @@ export const BlogsTab: React.FC<BlogsTabProps> = ({
       {/* Header row */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <h2 className="text-xl font-black text-slate-800">Blog Posts</h2>
-        <button
-          onClick={onNew}
-          className="flex items-center gap-2 px-4 py-2.5 bg-[#155DFC] hover:bg-[#1048c7] text-white text-sm font-bold rounded-sm shadow-md shadow-[#155DFC]/25 transition-all cursor-pointer shrink-0"
-        >
-          <Plus className="w-4 h-4" />
-          New Blog Post
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleDownloadCSV}
+            disabled={isDownloadingCSV}
+            className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-sm shadow-md shadow-emerald-600/25 transition-all cursor-pointer shrink-0 disabled:opacity-50"
+            title="Export blogs as CSV"
+          >
+            {isDownloadingCSV ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+            {isDownloadingCSV ? "Exporting..." : "Download CSV"}
+          </button>
+          <button
+            onClick={onNew}
+            className="flex items-center gap-2 px-4 py-2.5 bg-[#155DFC] hover:bg-[#1048c7] text-white text-sm font-bold rounded-sm shadow-md shadow-[#155DFC]/25 transition-all cursor-pointer shrink-0"
+          >
+            <Plus className="w-4 h-4" />
+            New Blog Post
+          </button>
+        </div>
       </div>
 
       {/* Filters */}

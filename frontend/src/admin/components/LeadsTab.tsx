@@ -9,7 +9,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { type Lead } from "../types";
-import { STATUS_CONFIG } from "../constants";
+import { STATUS_CONFIG, VALID_TRANSITIONS } from "../constants";
 import { fetchWithAuth } from "../../utils/apiClient";
 
 interface LeadsTabProps {
@@ -31,6 +31,7 @@ interface LeadsTabProps {
   handleStatusChange: (leadId: string, newStatus: string) => void;
   openLeadModal: (lead: Lead) => void;
   handleDeleteLead: (leadId: string) => void;
+  updatingLeadIds?: Set<string>;
 }
 
 const LeadRow = React.memo(
@@ -41,6 +42,7 @@ const LeadRow = React.memo(
     handleStatusChange,
     openLeadModal,
     handleDeleteLead,
+    isUpdating,
   }: {
     lead: Lead;
     idx: number;
@@ -48,74 +50,119 @@ const LeadRow = React.memo(
     handleStatusChange: (leadId: string, newStatus: string) => void;
     openLeadModal: (lead: Lead) => void;
     handleDeleteLead: (leadId: string) => void;
-  }) => (
-    <tr className="hover:bg-slate-50/50 transition-colors">
-      <td className="p-4 text-center text-xs font-black text-slate-400">
-        {(currentPage - 1) * 10 + idx + 1}
-      </td>
-      <td className="p-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 flex-shrink-0">
-            <User className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="font-bold text-slate-800">{lead.name}</div>
-            <div className="text-xs text-slate-500 mt-0.5">{lead.email}</div>
-            <div className="text-[10px] text-slate-400 mt-0.5 font-mono tracking-wide">
-              {lead.phone || "No phone provided"}
+    isUpdating?: boolean;
+  }) => {
+    const config =
+      STATUS_CONFIG[lead.status as keyof typeof STATUS_CONFIG] ||
+      STATUS_CONFIG.NEW;
+
+    const allowed = VALID_TRANSITIONS[lead.status] || [];
+    const isTerminal = allowed.length === 0;
+
+    return (
+      <tr
+        className={`transition-colors duration-200 ${
+          isUpdating ? "bg-blue-50/40" : "hover:bg-slate-50/50"
+        }`}
+      >
+        <td className="p-4 text-center text-xs font-black text-slate-400">
+          {(currentPage - 1) * 10 + idx + 1}
+        </td>
+        <td className="p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 flex-shrink-0">
+              <User className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="font-bold text-slate-800">{lead.name}</div>
+              <div className="text-xs text-slate-500 mt-0.5">{lead.email}</div>
+              <div className="text-[10px] text-slate-400 mt-0.5 font-mono tracking-wide">
+                {lead.phone || "No phone provided"}
+              </div>
             </div>
           </div>
-        </div>
-      </td>
-      <td className="p-4">
-        <div className="flex flex-col">
-          <span className="font-bold text-slate-800">
-            {new Date(lead.createdAt).toLocaleDateString("en-US", {
-              day: "numeric",
-              month: "short",
-              year: "numeric",
-            })}
-          </span>
-          <span className="text-xs text-slate-500 mt-0.5">
-            {new Date(lead.createdAt).toLocaleTimeString("en-US", {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
-          </span>
-        </div>
-      </td>
-      <td className="p-4 text-center">
-        <select
-          aria-label={`Change status for ${lead.name}`}
-          value={lead.status}
-          onChange={(e) => handleStatusChange(lead._id, e.target.value)}
-          className={`text-xs font-bold px-3 py-1.5 rounded-sm border outline-none cursor-pointer ${(STATUS_CONFIG[lead.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.NEW).bg} ${(STATUS_CONFIG[lead.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.NEW).color} ${(STATUS_CONFIG[lead.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.NEW).border}`}
-        >
-          {Object.keys(STATUS_CONFIG).map((status) => (
-            <option key={status} value={status}>
-              {STATUS_CONFIG[status as keyof typeof STATUS_CONFIG].label}
-            </option>
-          ))}
-        </select>
-      </td>
-      <td className="p-4">
-        <div className="flex flex-col gap-2 items-center">
-          <button
-            onClick={() => openLeadModal(lead)}
-            className="text-xs font-bold bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 px-3 py-2 rounded-sm w-full text-center cursor-pointer"
-          >
-            View / Edit
-          </button>
-          <button
-            onClick={() => handleDeleteLead(lead._id)}
-            className="text-xs font-bold bg-white border border-red-200 text-red-600 hover:bg-red-50 px-3 py-2 rounded-sm w-full text-center cursor-pointer"
-          >
-            Delete
-          </button>
-        </div>
-      </td>
-    </tr>
-  ),
+        </td>
+        <td className="p-4">
+          <div className="flex flex-col">
+            <span className="font-bold text-slate-800">
+              {new Date(lead.createdAt).toLocaleDateString("en-US", {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+              })}
+            </span>
+            <span className="text-xs text-slate-500 mt-0.5">
+              {new Date(lead.createdAt).toLocaleTimeString("en-US", {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </span>
+          </div>
+        </td>
+        <td className="p-4 text-center">
+          <div className="relative inline-flex items-center justify-center">
+            <select
+              aria-label={`Change status for ${lead.name}`}
+              disabled={isUpdating || isTerminal}
+              value={lead.status}
+              onChange={(e) => handleStatusChange(lead._id, e.target.value)}
+              className={`text-xs font-bold pl-3 ${
+                isUpdating
+                  ? "pr-8 cursor-wait opacity-80"
+                  : isTerminal
+                  ? "pr-6 !cursor-not-allowed opacity-80"
+                  : "pr-6 cursor-pointer"
+              } py-1.5 rounded-sm border outline-none transition-all duration-200 ${
+                config.bg
+              } ${config.color} ${config.border}`}
+            >
+              {Object.keys(STATUS_CONFIG).map((status) => {
+                const isCurrent = status === lead.status;
+                const isAllowed = allowed.includes(status);
+                const isBanned = !isCurrent && !isAllowed;
+                return (
+                  <option
+                    key={status}
+                    value={status}
+                    disabled={isBanned}
+                    className={
+                      isBanned
+                        ? "!cursor-not-allowed text-slate-400 bg-slate-100"
+                        : "cursor-pointer"
+                    }
+                  >
+                    {STATUS_CONFIG[status as keyof typeof STATUS_CONFIG].label}
+                  </option>
+                );
+              })}
+            </select>
+            {isUpdating && (
+              <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none flex items-center justify-center">
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-600" />
+              </div>
+            )}
+          </div>
+        </td>
+        <td className="p-4">
+          <div className="flex flex-col gap-2 items-center">
+            <button
+              onClick={() => openLeadModal(lead)}
+              className="text-xs font-bold bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 px-3 py-2 rounded-sm w-full text-center cursor-pointer"
+            >
+              View / Edit
+            </button>
+            <button
+              onClick={() => handleDeleteLead(lead._id)}
+              disabled={isUpdating}
+              className="text-xs font-bold bg-white border border-red-200 text-red-600 hover:bg-red-50 px-3 py-2 rounded-sm w-full text-center cursor-pointer disabled:opacity-50"
+            >
+              Delete
+            </button>
+          </div>
+        </td>
+      </tr>
+    );
+  },
 );
 
 export const LeadsTab: React.FC<LeadsTabProps> = ({
@@ -137,6 +184,7 @@ export const LeadsTab: React.FC<LeadsTabProps> = ({
   handleStatusChange,
   openLeadModal,
   handleDeleteLead,
+  updatingLeadIds,
 }) => {
   const [isDownloading, setIsDownloading] = useState(false);
 
@@ -301,6 +349,7 @@ export const LeadsTab: React.FC<LeadsTabProps> = ({
                     handleStatusChange={handleStatusChange}
                     openLeadModal={openLeadModal}
                     handleDeleteLead={handleDeleteLead}
+                    isUpdating={updatingLeadIds?.has(lead._id)}
                   />
                 ))
               )}

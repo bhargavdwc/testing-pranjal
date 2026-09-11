@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Menu, X, CheckCircle2 } from "lucide-react";
 import { fetchWithAuth } from "../utils/apiClient";
 import { type Lead, type LeadStatsResponse } from "./types";
+import { STATUS_CONFIG, VALID_TRANSITIONS } from "./constants";
 import { Login } from "./components/Login";
 import { Sidebar } from "./components/Sidebar";
 import { OverviewTab } from "./components/OverviewTab";
@@ -47,6 +48,9 @@ export const AdminPage: React.FC = () => {
   const [isLeadModalOpen, setIsLeadModalOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isUpdatingLead, setIsUpdatingLead] = useState(false);
+  const [updatingLeadIds, setUpdatingLeadIds] = useState<Set<string>>(
+    new Set(),
+  );
   const [leadNotes, setLeadNotes] = useState("");
   const [newNoteText, setNewNoteText] = useState("");
   const [isAddingNote, setIsAddingNote] = useState(false);
@@ -182,6 +186,30 @@ export const AdminPage: React.FC = () => {
 
   const handleStatusChange = useCallback(
     async (leadId: string, newStatus: string) => {
+      const currentLead = leads.find((l) => l._id === leadId);
+      if (!currentLead || currentLead.status === newStatus) return;
+      const previousStatus = currentLead.status;
+
+      // Validate status transition against pipeline funnel rules
+      const allowedTransitions = VALID_TRANSITIONS[currentLead.status] || [];
+      if (!allowedTransitions.includes(newStatus)) {
+        showToast(
+          `Cannot transition from ${STATUS_CONFIG[currentLead.status as keyof typeof STATUS_CONFIG]?.label || currentLead.status} to ${STATUS_CONFIG[newStatus as keyof typeof STATUS_CONFIG]?.label || newStatus}. Follow pipeline progression.`,
+          "error",
+        );
+        return;
+      }
+
+      // 1. Mark only this row as processing
+      setUpdatingLeadIds((prev) => new Set(prev).add(leadId));
+
+      // 2. Optimistic UI update for instantaneous responsiveness
+      setLeads((prev) =>
+        prev.map((l) =>
+          l._id === leadId ? { ...l, status: newStatus as Lead["status"] } : l,
+        ),
+      );
+
       try {
         const response = await fetchWithAuth(`/api/leads/${leadId}/status`, {
           method: "PUT",
@@ -190,23 +218,64 @@ export const AdminPage: React.FC = () => {
           },
           body: JSON.stringify({ status: newStatus }),
         });
-        if (response.ok) {
-          fetchLeads();
-          fetchLeadStats();
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          // Merge server response to keep lead consistent
+          setLeads((prev) =>
+            prev.map((l) => (l._id === leadId ? { ...l, ...data.lead } : l)),
+          );
+
           if (selectedLead && selectedLead._id === leadId) {
-            setSelectedLead({
-              ...selectedLead,
-              status: newStatus as Lead["status"],
-            });
+            setSelectedLead((prev) =>
+              prev ? { ...prev, ...data.lead } : null,
+            );
           }
+
+          // Silently update statistics in background without table refresh
+          fetchLeadStats();
+
+          // If filtering by specific status, smoothly remove after brief visual confirmation
+          if (leadStatusFilter !== "All" && newStatus !== leadStatusFilter) {
+            setTimeout(() => {
+              setLeads((prev) => prev.filter((l) => l._id !== leadId));
+            }, 350);
+          }
+
+          const statusLabel =
+            STATUS_CONFIG[newStatus as keyof typeof STATUS_CONFIG]?.label ||
+            newStatus;
+          setToastMessage(`Status updated to ${statusLabel}`);
+          setTimeout(() => setToastMessage(null), 3000);
+        } else {
+          // Rollback on server error
+          setLeads((prev) =>
+            prev.map((l) =>
+              l._id === leadId ? { ...l, status: previousStatus } : l,
+            ),
+          );
+          setToastMessage(data?.message || "Failed to update status");
+          setTimeout(() => setToastMessage(null), 4000);
         }
       } catch (err) {
-        console.error(err);
-        setToastMessage("Failed to update status");
-        setTimeout(() => setToastMessage(null), 3000);
+        console.error("Status update error:", err);
+        setLeads((prev) =>
+          prev.map((l) =>
+            l._id === leadId ? { ...l, status: previousStatus } : l,
+          ),
+        );
+        setToastMessage("Network error: Failed to update status");
+        setTimeout(() => setToastMessage(null), 4000);
+      } finally {
+        setUpdatingLeadIds((prev) => {
+          const next = new Set(prev);
+          next.delete(leadId);
+          return next;
+        });
       }
     },
-    [fetchLeads, fetchLeadStats, selectedLead],
+    [leads, fetchLeadStats, selectedLead, leadStatusFilter],
   );
 
   const handleDeleteLead = useCallback((leadId: string) => {
@@ -372,6 +441,7 @@ export const AdminPage: React.FC = () => {
                 handleStatusChange={handleStatusChange}
                 openLeadModal={openLeadModal}
                 handleDeleteLead={handleDeleteLead}
+                updatingLeadIds={updatingLeadIds}
               />
             )}
             {activeTab === "users" && userRole === "super_admin" && (

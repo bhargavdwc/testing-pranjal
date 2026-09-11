@@ -5,3 +5,12 @@ export const STATUS_CONFIG = {
   OPPORTUNITY: { label: 'Opportunity', color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200', icon: '🟢' },
   CONVERTED: { label: 'Converted', color: 'text-purple-700', bg: 'bg-purple-50', border: 'border-purple-200', icon: '🟣' },
 };
+
+export const VALID_TRANSITIONS: Record<string, string[]> = {
+  NEW: ['QUALIFIED', 'NOT_QUALIFIED'],
+  QUALIFIED: ['OPPORTUNITY', 'NOT_QUALIFIED'],
+  OPPORTUNITY: ['CONVERTED', 'NOT_QUALIFIED'],
+  NOT_QUALIFIED: ['NEW', 'QUALIFIED'],
+  CONVERTED: ['NEW'], // Allow re-opening to starting stage (New Lead)
+};
+

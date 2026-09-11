@@ -42,7 +42,12 @@ const blogSchema = new mongoose.Schema(
     },
     schemaMarkup: { type: String, default: "" },
     longContent: { type: String, default: "" },
-    status: { type: String, enum: ["draft", "published", "scheduled"], default: "draft" },
+    status: {
+      type: String,
+      enum: ["draft", "published", "scheduled"],
+      default: "draft",
+      required: [true, "Blog status is required"],
+    },
     scheduledAt: { type: Date, default: null },
   },
   {
